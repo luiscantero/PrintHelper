@@ -10,12 +10,16 @@ namespace LC.Helpers
 {
     public class PrintHelper : IDisposable
     {
-        private bool _registered = false;
         private TaskCompletionSource<object> _tcs = new TaskCompletionSource<object>();
         private string _taskTitle = null;
         private PrintDocument _printDoc = null;
         private IPrintDocumentSource _printDocSource = null;
         private List<UIElement> _printPages = null;
+
+        public PrintHelper()
+        {
+            RegisterForPrinting();
+        }
 
         public async Task PrintAsync<T>(IEnumerable<T> list, Func<int, StackPanel> GetNewPage, Func<T, UIElement> GetPageItem, int itemsPerPage, string taskTitle)
         {
@@ -31,11 +35,6 @@ namespace LC.Helpers
 
             _taskTitle = taskTitle;
             _printPages = printPages;
-
-            if (!_registered)
-            {
-                RegisterForPrinting();
-            }
 
             await PrintManager.ShowPrintUIAsync();
 
@@ -141,21 +140,14 @@ namespace LC.Helpers
             _printDoc.GetPreviewPage += PrintDoc_GetPreviewPage;
             _printDoc.AddPages += PrintDoc_AddPages;
             PrintManager.GetForCurrentView().PrintTaskRequested += PrintTaskRequested;
-
-            _registered = true;
         }
 
         private void UnregisterForPrinting()
         {
-            if (_printDoc != null)
-            {
-                _printDoc.Paginate -= PrintDoc_Paginate;
-                _printDoc.GetPreviewPage -= PrintDoc_GetPreviewPage;
-                _printDoc.AddPages -= PrintDoc_AddPages;
-                PrintManager.GetForCurrentView().PrintTaskRequested -= PrintTaskRequested;
-
-                _registered = false;
-            }
+            _printDoc.Paginate -= PrintDoc_Paginate;
+            _printDoc.GetPreviewPage -= PrintDoc_GetPreviewPage;
+            _printDoc.AddPages -= PrintDoc_AddPages;
+            PrintManager.GetForCurrentView().PrintTaskRequested -= PrintTaskRequested;
         }
 
         public void Dispose()
